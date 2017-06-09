@@ -22,7 +22,7 @@
 /**
  * @module moodle-atto_sketch-button
  */
- 
+
 /**
  * Atto text editor sketch plugin.
  *
@@ -35,64 +35,24 @@ var COMPONENTNAME = 'atto_sketch',
     REGEX = {
         ISPERCENT: /\d+%/
     },
-    ALIGNMENTS = [
-        // Vertical alignment.
-        {
-            name: 'verticalAlign',
-            str: 'alignment_top',
-            value: 'text-top',
-            margin: '0 0.5em'
-        }, {
-            name: 'verticalAlign',
-            str: 'alignment_middle',
-            value: 'middle',
-            margin: '0 0.5em'
-        }, {
-            name: 'verticalAlign',
-            str: 'alignment_bottom',
-            value: 'text-bottom',
-            margin: '0 0.5em',
-            isDefault: true
-        },
-
-        // Floats.
-        {
-            name: 'float',
-            str: 'alignment_left',
-            value: 'left',
-            margin: '0 0.5em 0 0'
-        }, {
-            name: 'float',
-            str: 'alignment_right',
-            value: 'right',
-            margin: '0 0 0 0.5em'
-        }
-    ],
     IFSOURCE = '../lib/editor/atto/plugins/sketch/sketch.html',
     IFID = 'sketchpad',
-    IFID = 'sketchpad',
     SUBMITID = 'submit',
-    SELECTALIGN = '',
     CSS = {
         INPUTSUBMIT: 'atto_sketch_submit',
-        HEIGHT: 'min-height: 400px;height: calc(100% - 40px);',
-        WIDTH: 'width: 100%;'
+        HGT: 'min-height: 400px;height: calc(100% - 40px);',
+        WDT: 'width: 100%;'
     },
-    myLC = null,
-    TEMPLATE = '<iframe src="{{isource}}" id="{{iframeID}}" style="{{CSS.HEIGHT}}{{CSS.WIDTH}}" scrolling="auto" frameborder="0"></iframe>' +
-               '<div style="text-align:center"><button class="mdl-align {{CSS.INPUTSUBMIT}}" id="{{submitid}}" style="{{selectalign}}">{{get_string "insert" component}}</button></div>';
+    TEMPLATE = '<iframe src="{{isource}}" id="{{iframeID}}" style="{{CSS.HGT}}{{CSS.WDT}}" scrolling="auto" frameborder="0"> \
+               </iframe> \
+               <div style="text-align:center"> \
+                   <button class="mdl-align {{CSS.INPUTSUBMIT}}" id="{{submitid}}" style="{{selectalign}}"> \
+                       {{get_string "insert" component}} \
+                   </button> \
+               </div>',
+    myLC = null;
 
     Y.namespace('M.atto_sketch').Button = Y.Base.create('button', Y.M.editor_atto.EditorPlugin, [], {
-        /**
-         * A reference to the current selection at the time that the dialogue
-         * was opened.
-         *
-         * @property _currentSelection
-         * @type Range
-         * @private
-         */
-        _currentSelection: null,
-
         /**
          * Initialize the button
          *
@@ -125,37 +85,29 @@ var COMPONENTNAME = 'atto_sketch',
          */
         _getSelectedImageProperties: function() {
             var properties = {
-                    src: null,
-                    alt: null,
-                    width: null,
-                    height: null,
-                    align: '',
-                    presentation: false
-                },
+                src: null,
+                alt: null,
+                width: null,
+                height: null
+            },
 
-                // Get the current selection.
-                images = this.get('host').getSelectedNodes(),
-                width,
-                height,
-                style,
-                image;
+            // Get the current selection.
+            images = this.get('host').getSelectedNodes(),
+            width,
+            height;
 
             if (images) {
                 images = images.filter('img');
             }
 
             if (images && images.size()) {
-                image = this._removeLegacyAlignment(images.item(0));
-                this._selectedImage = image;
+                this._selectedImage = images.item(0);
 
-                style = image.getAttribute('style');
-                properties.customstyle = style;
-
-                width = image.getAttribute('width');
+                width = this._selectedImage.getAttribute('width');
                 if (!width.match(REGEX.ISPERCENT)) {
                     width = parseInt(width, 10);
                 }
-                height = image.getAttribute('height');
+                height = this._selectedImage.getAttribute('height');
                 if (!height.match(REGEX.ISPERCENT)) {
                     height = parseInt(height, 10);
                 }
@@ -166,10 +118,9 @@ var COMPONENTNAME = 'atto_sketch',
                 if (height !== 0) {
                     properties.height = height;
                 }
-                this._getAlignmentPropeties(image, properties);
-                properties.src = image.getAttribute('src');
-                properties.alt = image.getAttribute('alt') || '';
-                properties.presentation = (image.get('role') === 'presentation');
+
+                properties.src = this._selectedImage.getAttribute('src');
+                properties.alt = this._selectedImage.getAttribute('alt') || '';
                 return properties;
             }
 
@@ -179,106 +130,23 @@ var COMPONENTNAME = 'atto_sketch',
         },
 
         /**
-         * Removes any legacy styles added by previous versions of the atto image button.
-         *
-         * @method _removeLegacyAlignment
-         * @param {Y.Node} imageNode
-         * @return {Y.Node}
-         * @private
-         */
-        _removeLegacyAlignment: function(imageNode) {
-            if (!imageNode.getStyle('margin')) {
-                // There is no margin therefore this cannot match any known alignments.
-                return imageNode;
-            }
-
-            ALIGNMENTS.some(function(alignment) {
-                if (imageNode.getStyle(alignment.name) !== alignment.value) {
-                    // The name/value do not match. Skip.
-                    return false;
-                }
-
-                var normalisedNode = Y.Node.create('<div>');
-                normalisedNode.setStyle('margin', alignment.margin);
-                if (imageNode.getStyle('margin') !== normalisedNode.getStyle('margin')) {
-                    // The margin does not match.
-                    return false;
-                }
-
-                Y.log('Legacy alignment found and removed.', 'info', 'atto_image-button');
-                imageNode.addClass(this._getAlignmentClass(alignment.value));
-                imageNode.setStyle(alignment.name, null);
-                imageNode.setStyle('margin', null);
-
-                return true;
-            }, this);
-
-            return imageNode;
-        },
-
-        _getAlignmentClass: function(alignment) {
-            return CSS.ALIGNSETTINGS + '_' + alignment;
-        },
-
-        /**
-         * Sets the alignment of a properties object.
-         *
-         * @method _getAlignmentPropeties
-         * @param {Node} image The image that the alignment properties should be found for
-         * @param {Object} properties The properties object that is created in _getSelectedImageProperties()
-         * @private
-         */
-        _getAlignmentPropeties: function(image, properties) {
-            var complete = false,
-                defaultAlignment;
-
-            // Check for an alignment value.
-            complete = ALIGNMENTS.some(function(alignment) {
-                var classname = this._getAlignmentClass(alignment.value);
-                if (image.hasClass(classname)) {
-                    properties.align = alignment.value;
-                    Y.log('Found alignment ' + alignment.value, 'debug', 'atto_image-button');
-    
-                    return true;
-                }
-    
-                if (alignment.isDefault) {
-                    defaultAlignment = alignment.value;
-                }
-    
-                return false;
-            }, this);
-    
-            if (!complete && defaultAlignment) {
-                properties.align = defaultAlignment;
-            }
-        },
-
-        /**
          * Display the panoptobutton Dialogue
          *
          * @method _displayDialogue
          * @private
          */
         _displayDialogue: function (e, clickedicon) {
-            // Store the current selection.
-            this._currentSelection = this.get('host').getSelection();
-
             var width = '95%',
                 height = '95%',
-                dialogue = this.getDialogue({
-                    headerContent: M.util.get_string('sketchtitle', COMPONENTNAME),
-                    width: width,
-                    height: height,
-                    focusAfterHide: clickedicon
-                }),
-                buttonform,
                 bodycontent,
-                defaultserver,
-                eventmethod,
-                evententer,
-                messageevent,
-                aservername;
+                dialogue;
+
+            dialogue = this.getDialogue({
+                headerContent: M.util.get_string('sketchtitle', COMPONENTNAME),
+                width: width,
+                height: height,
+                focusAfterHide: clickedicon
+            });
 
             e.preventDefault();
 
@@ -309,7 +177,7 @@ var COMPONENTNAME = 'atto_sketch',
             Y.one('.moodle-dialogue-bd').setStyle('height', 'calc(100% - 55px)');
 
             // IE 11 and under do not understand CSS3 height calc().
-            if (navigator.userAgent.indexOf('MSIE')!==-1
+            if (navigator.userAgent.indexOf('MSIE') !== -1
                 || navigator.appVersion.indexOf('Trident/') > 0) {
                 Y.one('.moodle-dialogue').setStyle('height', '0');
                 Y.one('.moodle-dialogue').setStyle('min-height', '560px');
@@ -324,20 +192,26 @@ var COMPONENTNAME = 'atto_sketch',
             this.markUpdated();
 
             var selected = false;
-            if (this._currentSelection !== false) {
+            if (this.get('host').getSelection() !== false) {
                 selected = this._getSelectedImageProperties();
             }
             document.getElementById(IFID).addEventListener("load", function() {
-                myLC =  document.getElementById(IFID).contentWindow.LC.init(document.getElementById(IFID).contentDocument.getElementsByClassName('literally')[0],
-                        {
+                var sketchpad = document.getElementById(IFID).contentDocument.getElementsByClassName('literally')[0];
+                myLC = document.getElementById(IFID).contentWindow.LC.init(sketchpad,
+                       {
                             imageURLPrefix: 'assets/img'
-                        });
+                       });
 
                 if (selected) { // Selection is an image.
-                    var newImage = new Image()
+                    var newImage = new Image();
                     newImage.src = selected.src;
-    
-                    myLC.saveShape(document.getElementById(IFID).contentWindow.LC.createShape('Image', {x: 10, y: 10, image: newImage}));
+                    var newShape = document.getElementById(IFID).contentWindow.LC.createShape('Image',
+                                   {
+                                        x: 10,
+                                        y: 10,
+                                        image: newImage
+                                   });
+                    myLC.saveShape(newShape);
                 }
 
             });
@@ -360,13 +234,12 @@ var COMPONENTNAME = 'atto_sketch',
                     clickedicon: clickedicon,
                     isource: IFSOURCE,
                     iframeID: IFID,
-                    submitid: SUBMITID,
-                    selectalign: SELECTALIGN
+                    submitid: SUBMITID
                 }));
 
-            this._form = content;
-            this._form.one('.' + CSS.INPUTSUBMIT).on('click', this._doInsert, this);
-            return content;
+                this._form = content;
+                this._form.one('.' + CSS.INPUTSUBMIT).on('click', this._doInsert, this);
+                return content;
         },
 
         /**
@@ -378,7 +251,7 @@ var COMPONENTNAME = 'atto_sketch',
             e.preventDefault();
             var parent = this,
                 imgstring = myLC.getImage().toDataURL(),
-                sketch = '<img src="'+imgstring+'" />';
+                sketch = '<img src="' + imgstring + '" />';
 
             // Hide the pop-up after we've received the selection in the "deliveryList" message.
             // Hiding before message is received causes exceptions in IE.
