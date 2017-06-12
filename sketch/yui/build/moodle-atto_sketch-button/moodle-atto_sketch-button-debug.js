@@ -42,7 +42,7 @@ var COMPONENTNAME = 'atto_sketch',
     SUBMITID = 'submit',
     CSS = {
         INPUTSUBMIT: 'atto_sketch_submit',
-        HGT: 'min-height: 400px;height: calc(100% - 40px);',
+        HGT: 'height: calc(100% - 40px);',
         WDT: 'width: 100%;'
     },
     TEMPLATE = '<iframe src="{{isource}}" id="{{iframeID}}" style="{{CSS.HGT}}{{CSS.WDT}}" scrolling="auto" frameborder="0"> \
@@ -138,8 +138,8 @@ var COMPONENTNAME = 'atto_sketch',
          * @private
          */
         _displayDialogue: function (e, clickedicon) {
-            var width = '95%',
-                height = '95%',
+            var width = '100%',
+                height = '100vh',
                 bodycontent,
                 dialogue;
 
@@ -175,16 +175,6 @@ var COMPONENTNAME = 'atto_sketch',
             // Append buttons to iframe.
             bodycontent = this._getFormContent(clickedicon);
 
-            Y.one('.moodle-dialogue-bd').setStyle('min-height', '500px');
-            Y.one('.moodle-dialogue-bd').setStyle('height', 'calc(100% - 55px)');
-
-            // IE 11 and under do not understand CSS3 height calc().
-            if (navigator.userAgent.indexOf('MSIE') !== -1
-                || navigator.appVersion.indexOf('Trident/') > 0) {
-                Y.one('.moodle-dialogue').setStyle('height', '0');
-                Y.one('.moodle-dialogue').setStyle('min-height', '560px');
-            }
-
             // Set to bodycontent.
             dialogue.set('bodyContent', bodycontent);
 
@@ -215,6 +205,21 @@ var COMPONENTNAME = 'atto_sketch',
                                    });
                     myLC.saveShape(newShape);
                 }
+
+                // IE 11 and under do not understand CSS3 height calc().
+                if (navigator.userAgent.indexOf('MSIE') !== -1
+                    || navigator.appVersion.indexOf('Trident/') > 0) {
+                    var ieheight = document.documentElement.clientHeight;
+                    Y.one('.moodle-dialogue').setStyle('height', ieheight + 'px');
+                    Y.one('.moodle-dialogue-bd').setStyle('height', ieheight - 50 + 'px');
+                }
+
+                // Set top and left to corner and calculate height with CSS3.
+                var top = parseInt(Y.one('.moodle-dialogue').getStyle('top')) - 15;
+                Y.one('.moodle-dialogue').setStyle('top', top + "px");
+                Y.one('.moodle-dialogue').setStyle('left', '0px');
+                Y.one('.moodle-dialogue-bd').setStyle('height', 'calc(100% - 50px)');
+                Y.one('.moodle-dialogue-bd').setStyle('padding', '0');
 
             });
         },
