@@ -189,15 +189,17 @@ var COMPONENTNAME = 'atto_sketch',
             }
             document.getElementById(IFID).addEventListener("load", function() {
                 var sketchpad = document.getElementById(IFID).contentDocument.getElementsByClassName('literally')[0];
-                myLC = document.getElementById(IFID).contentWindow.LC.init(sketchpad,
+                var iframe = document.getElementById(IFID).contentWindow;
+                myLC = iframe.LC.init(sketchpad,
                        {
-                            imageURLPrefix: 'assets/img'
+                            imageURLPrefix: 'assets/img',
+                            tools: iframe.LC.defaultTools.concat([iframe.regularShapes])
                        });
 
                 if (selected) { // Selection is an image.
                     var newImage = new Image();
                     newImage.src = selected.src;
-                    var newShape = document.getElementById(IFID).contentWindow.LC.createShape('Image',
+                    var newShape = iframe.LC.createShape('Image',
                                    {
                                         x: 10,
                                         y: 10,
