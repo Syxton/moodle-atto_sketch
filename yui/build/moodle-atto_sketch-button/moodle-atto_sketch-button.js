@@ -37,7 +37,7 @@ var COMPONENTNAME = 'atto_sketch',
     REGEX = {
         ISPERCENT: /\d+%/
     },
-    IFSOURCE = '/lib/editor/atto/plugins/sketch/sketch.html',
+    IFSOURCE = M.cfg.wwwroot + '/lib/editor/atto/plugins/sketch/sketch.html',
     IFID = 'sketchpad',
     SUBMITID = 'submit',
     CSS = {
