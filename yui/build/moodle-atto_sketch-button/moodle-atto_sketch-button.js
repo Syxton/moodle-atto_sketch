@@ -212,30 +212,29 @@ var COMPONENTNAME = 'atto_sketch',
                 if (navigator.userAgent.indexOf('MSIE') !== -1
                     || navigator.appVersion.indexOf('Trident/') > 0) {
                     var ieheight = document.documentElement.clientHeight;
-                    if (Y.one('.moodle-dialogue')) {
-                        Y.one('.moodle-dialogue').setStyle('height', ieheight + 'px');
+                    if (Y.one('.moodle-dialogue-focused')) {
+                        Y.one('.moodle-dialogue-focused').setStyle('height', ieheight + 'px');
                     }
-                    if (Y.one('.moodle-dialogue-bd')) {
-                        Y.one('.moodle-dialogue-bd').setStyle('height', ieheight - 50 + 'px');
+                    if (Y.one('.moodle-dialogue-focused .moodle-dialogue-bd')) {
+                        Y.one('.moodle-dialogue-focused .moodle-dialogue-bd').setStyle('height', ieheight - 50 + 'px');
                     }
                 }
 
                 // Set top and left to corner and calculate height with CSS3.
-                if (Y.one('.moodle-dialogue')) {
-                    var top = parseInt(Y.one('.moodle-dialogue').getStyle('top'));
-                    Y.one('.moodle-dialogue').setStyle('z-index', '9999');
-                    Y.one('.moodle-dialogue').setStyle('top', '0');
-                    Y.one('.moodle-dialogue').setStyle('left', '0');
+                if (Y.one('.moodle-dialogue-focused')) {
+                    Y.one('.moodle-dialogue-focused').setStyle('z-index', '9999');
+                    Y.one('.moodle-dialogue-focused').setStyle('top', '0');
+                    Y.one('.moodle-dialogue-focused').setStyle('left', '0');
                 }
-                if (Y.one('.moodle-dialogue-bd')) {
-                    Y.one('.moodle-dialogue-bd').setStyle('height', 'calc(100% - 50px)');
-                    Y.one('.moodle-dialogue-bd').setStyle('padding', '0');
+                if (Y.one('.moodle-dialogue-focused .moodle-dialogue-bd')) {
+                    Y.one('.moodle-dialogue-focused .moodle-dialogue-bd').setStyle('height', 'calc(100% - 50px)');
+                    Y.one('.moodle-dialogue-focused .moodle-dialogue-bd').setStyle('padding', '0');
                 }
-                if (Y.one('.moodle-dialogue-base')) {
-                    Y.one('.moodle-dialogue-base').setStyle('bottom', "0");
+                if (Y.one('.moodle-dialogue-focused').ancestor('.moodle-dialogue-base')) {
+                    Y.one('.moodle-dialogue-focused').ancestor('.moodle-dialogue-base').setStyle('bottom', "0");
                 }
-                if (Y.one('.moodle-dialogue-fullscreen')) {
-                    Y.one('.moodle-dialogue-fullscreen').setStyle('bottom', "0");
+                if (Y.one('.moodle-dialogue-focused').ancestor('.moodle-dialogue-fullscreen')) {
+                    Y.one('.moodle-dialogue-focused').ancestor('.moodle-dialogue-fullscreen').setStyle('bottom', "0");
                 }
             });
         },
