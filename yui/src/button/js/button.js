@@ -220,6 +220,7 @@ var COMPONENTNAME = 'atto_sketch',
 
                 // Set top and left to corner and calculate height with CSS3.
                 if (Y.one('.moodle-dialogue-focused')) {
+                    Y.one('.moodle-dialogue-focused').setStyle('position', 'fixed');
                     Y.one('.moodle-dialogue-focused').setStyle('z-index', '9999');
                     Y.one('.moodle-dialogue-focused').setStyle('top', '0');
                     Y.one('.moodle-dialogue-focused').setStyle('left', '0');
