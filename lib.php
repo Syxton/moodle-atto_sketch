@@ -38,3 +38,13 @@ function atto_sketch_strings_for_js() {
                                           'insert'),
                                     'atto_sketch');
 }
+
+/**
+ * Set params for this plugin
+ * @param string $elementid
+ */
+function atto_sketch_params_for_js($elementid, $options, $fpoptions) {
+    // Pass the number of visible groups as a param.
+    $params = array('storeinrepo' => get_config('atto_sketch', 'storeinrepo'));
+    return $params;
+}

@@ -25,3 +25,6 @@
 $string['pluginname'] = 'Sketch';
 $string['sketchtitle'] = 'Sketch and Save';
 $string['insert'] = 'Insert Sketch';
+$string['settings'] = 'Sketch settings';
+$string['storeinrepo'] = 'Store as image file';
+$string['storeinrepo_desc'] = 'If checked the sketch will be saved as a standard image upload instead of a base64 inline image.';

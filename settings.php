@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Atto text editor integration version file.
+ * Settings that allow different methods for image placement.
  *
  * @package    atto_sketch
  * @copyright  2017 Matt Davidson <davidso1@rose-hulman.com>
@@ -24,8 +24,17 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2017090800;        // The current plugin version (Date: YYYYMMDDXX).
-$plugin->release   = '1';
-$plugin->requires  = 2015111600;        // Requires this Moodle version.
-$plugin->component = 'atto_sketch';
-$plugin->maturity = MATURITY_STABLE;
+$ADMIN->add('editoratto', new admin_category('atto_sketch', new lang_string('pluginname', 'atto_sketch')));
+
+$settings = new admin_settingpage('atto_sketch_settings', new lang_string('settings', 'atto_sketch'));
+if ($ADMIN->fulltree) {
+    // Number of groups to show when collapsed.
+    $name = new lang_string('storeinrepo', 'atto_sketch');
+    $desc = new lang_string('storeinrepo_desc', 'atto_sketch');
+
+    $setting = new admin_setting_configcheckbox('atto_sketch/storeinrepo',
+                                                $name,
+                                                $desc,
+                                                0);
+    $settings->add($setting);
+}

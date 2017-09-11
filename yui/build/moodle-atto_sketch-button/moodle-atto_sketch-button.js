@@ -34,6 +34,7 @@ YUI.add('moodle-atto_sketch-button', function (Y, NAME) {
  */
 
 var COMPONENTNAME = 'atto_sketch',
+    ATTRSTOREINREPO = 'storeinrepo',
     REGEX = {
         ISPERCENT: /\d+%/
     },
@@ -45,13 +46,23 @@ var COMPONENTNAME = 'atto_sketch',
         HGT: 'height: calc(100% - 40px);',
         WDT: 'width: 100%;'
     },
-    TEMPLATE = '<iframe src="{{isource}}" id="{{iframeID}}" style="{{CSS.HGT}}{{CSS.WDT}}" scrolling="auto" frameborder="0"> \
-               </iframe> \
-               <div style="text-align:center"> \
-                   <button class="mdl-align {{CSS.INPUTSUBMIT}}" id="{{submitid}}" style="{{selectalign}}"> \
-                       {{get_string "insert" component}} \
-                   </button> \
-               </div>',
+    TEMPLATE = '' +
+            '<iframe src="{{isource}}" id="{{iframeID}}" style="{{CSS.HGT}}{{CSS.WDT}}" scrolling="auto" frameborder="0">' +
+            '</iframe>' +
+            '<div style="text-align:center">' +
+                '<button class="mdl-align {{CSS.INPUTSUBMIT}}" id="{{submitid}}" style="{{selectalign}}">' +
+                    '{{get_string "insert" component}}' +
+                '</button>' +
+            '</div>',
+    IMAGETEMPLATE = '' +
+                '<img src="{{url}}" alt="{{alt}}" ' +
+                    '{{#if width}}width="{{width}}" {{/if}}' +
+                    '{{#if height}}height="{{height}}" {{/if}}' +
+                    '{{#if presentation}}role="presentation" {{/if}}' +
+                    '{{#if customstyle}}style="{{customstyle}}" {{/if}}' +
+                    '{{#if classlist}}class="{{classlist}}" {{/if}}' +
+                    '{{#if id}}id="{{id}}" {{/if}}' +
+                '/>',
     myLC = null;
 
     Y.namespace('M.atto_sketch').Button = Y.Base.create('button', Y.M.editor_atto.EditorPlugin, [], {
@@ -60,7 +71,7 @@ var COMPONENTNAME = 'atto_sketch',
          *
          * @method Initializer
          */
-        initializer: function () {
+        initializer: function() {
             // Set name of button icon to be loaded.
             var icon = 'iconone';
 
@@ -74,6 +85,151 @@ var COMPONENTNAME = 'atto_sketch',
                 tags: 'img',
                 tagMatchRequiresAll: false
             });
+        },
+
+        /**
+         * Converts base64 to binary.
+         *
+         * @method _convertImage
+         * @return {Blob} Binary object.
+         * @private
+         */
+        _convertImage: function(dataURI) {
+            // convert base64/URLEncoded data component to raw binary data held in a string
+            var byteString;
+            if (dataURI.split(',')[0].indexOf('base64') >= 0)
+                byteString = atob(dataURI.split(',')[1]);
+            else
+                byteString = unescape(dataURI.split(',')[1]);
+        
+            // separate out the mime component
+            var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+        
+            // write the bytes of the string to a typed array
+            var ia = new Uint8Array(byteString.length);
+            for (var i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+        
+            return new Blob([ia], {type:mimeString});
+        },
+
+        /**
+         * Handle an image to repo.
+         *
+         * @method _doInsert
+         * @param {EventFacade} e
+         * @return mixed
+         * @private
+         */
+        _doInsert: function(e) {
+            var self = this,
+                host = this.get('host'),
+                template = Y.Handlebars.compile(IMAGETEMPLATE);
+
+            host.saveSelection();
+            e = e._event;
+
+            var sketchimage = self._convertImage(myLC.getImage().toDataURL());
+
+            // Only handle the event if an image file was dropped in.
+            var handlesDataTransfer = (sketchimage && sketchimage.size && sketchimage.type == 'image/png');
+            if (handlesDataTransfer) {
+                var options = host.get('filepickeroptions').image,
+                    savepath = (options.savepath === undefined) ? '/' : options.savepath,
+                    formData = new FormData(),
+                    timestamp = 0,
+                    uploadid = "",
+                    xhr = new XMLHttpRequest(),
+                    imagehtml = "",
+                    keys = Object.keys(options.repositories);
+
+                e.preventDefault();
+                e.stopPropagation();
+                formData.append('repo_upload_file', sketchimage);
+                formData.append('itemid', options.itemid);
+
+                // List of repositories is an object rather than an array.  This makes iteration more awkward.
+                for (var i = 0; i < keys.length; i++) {
+                    if (options.repositories[keys[i]].type === 'upload') {
+                        formData.append('repo_id', options.repositories[keys[i]].id);
+                        break;
+                    }
+                }
+                formData.append('env', options.env);
+                formData.append('sesskey', M.cfg.sesskey);
+                formData.append('client_id', options.client_id);
+                formData.append('savepath', savepath);
+                formData.append('ctx_id', options.context.id);
+
+                // Insert spinner as a placeholder.
+                timestamp = new Date().getTime();
+                uploadid = 'moodleimage_' + Math.round(Math.random() * 100000) + '-' + timestamp;
+                self.getDialogue({ focusAfterHide: null }).hide();
+                host.focus();
+                host.restoreSelection();
+                imagehtml = template({
+                    url: M.util.image_url("i/loading_small", 'moodle'),
+                    alt: M.util.get_string('uploading', COMPONENTNAME),
+                    id: uploadid
+                });
+                host.insertContentAtFocusPoint(imagehtml);
+                self.markUpdated();
+
+                // Kick off a XMLHttpRequest.
+                xhr.onreadystatechange = function() {
+                    var placeholder = self.editor.one('#' + uploadid),
+                        result,
+                        file,
+                        newhtml,
+                        newimage;
+
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            result = JSON.parse(xhr.responseText);
+                            if (result) {
+                                if (result.error) {
+                                    if (placeholder) {
+                                        placeholder.remove(true);
+                                    }
+                                    return new M.core.ajaxException(result);
+                                }
+
+                                file = result;
+                                if (result.event && result.event === 'fileexists') {
+                                    // A file with this name is already in use here - rename to avoid conflict.
+                                    // Chances are, it's a different image (stored in a different folder on the user's computer).
+                                    // If the user wants to reuse an existing image, they can copy/paste it within the editor.
+                                    file = result.newfile;
+                                }
+
+                                // Replace placeholder with actual image.
+                                newhtml = template({
+                                    url: file.url,
+                                    presentation: true
+                                });
+                                newimage = Y.Node.create(newhtml);
+                                if (placeholder) {
+                                    placeholder.replace(newimage);
+                                } else {
+                                    self.editor.appendChild(newimage);
+                                }
+                                self.markUpdated();
+                            }
+                        } else {
+                            Y.use('moodle-core-notification-alert', function() {
+                                new M.core.alert({message: M.util.get_string('servererror', 'moodle')});
+                            });
+                            if (placeholder) {
+                                placeholder.remove(true);
+                            }
+                        }
+                    }
+                };
+                xhr.open("POST", M.cfg.wwwroot + '/repository/repository_ajax.php?action=upload', true);
+                xhr.send(formData);
+                return true;
+            }
         },
 
         /**
@@ -135,9 +291,11 @@ var COMPONENTNAME = 'atto_sketch',
          * Display the panoptobutton Dialogue
          *
          * @method _displayDialogue
+         * @param {EventFacade} e
+         * @param clickedicon
          * @private
          */
-        _displayDialogue: function (e, clickedicon) {
+        _displayDialogue: function(e, clickedicon) {
             var width = '100%',
                 height = '100vh',
                 bodycontent,
@@ -244,11 +402,12 @@ var COMPONENTNAME = 'atto_sketch',
          * Return the dialogue content for the tool, attaching any required
          * events.
          *
-         * @method _getDialogueContent
+         * @method _getFormContent
+         * @param clickedicon
          * @return {Node} The content to place in the dialogue.
          * @private
          */
-        _getFormContent: function (clickedicon) {
+        _getFormContent: function(clickedicon) {
             var template = Y.Handlebars.compile(TEMPLATE),
                 content = Y.Node.create(template({
                     elementid: this.get('host').get('elementid'),
@@ -261,16 +420,23 @@ var COMPONENTNAME = 'atto_sketch',
                 }));
 
                 this._form = content;
-                this._form.one('.' + CSS.INPUTSUBMIT).on('click', this._doInsert, this);
+                // Check setting.
+                if (this.get(ATTRSTOREINREPO) > 0) {
+                    this._form.one('.' + CSS.INPUTSUBMIT).on('click', this._doInsert, this);
+                } else {
+                    this._form.one('.' + CSS.INPUTSUBMIT).on('click', this._doInsertBase64, this);
+                }
+
                 return content;
         },
 
         /**
          * Inserts the users input onto the page
-         * @method _getDialogueContent
+         * @method _doInsertBase64
+         * @param {EventFacade} e
          * @private
          */
-        _doInsert: function (e) {
+        _doInsertBase64: function(e) {
             e.preventDefault();
             var parent = this,
                 imgstring = myLC.getImage().toDataURL(),
@@ -284,6 +450,18 @@ var COMPONENTNAME = 'atto_sketch',
             parent.get('host').insertContentAtFocusPoint(sketch);
             parent.markUpdated();
         }
-    });
+    }, {
+    ATTRS: {
+        /**
+         * How to save sketches.
+         *
+         * @attribute storeinrepo
+         * @type Number
+         * @default 0
+         */
+        storeinrepo: {
+            value: 0
+        }
+    }});
 
 }, '@VERSION@', {"requires": ["moodle-editor_atto-plugin"]});
