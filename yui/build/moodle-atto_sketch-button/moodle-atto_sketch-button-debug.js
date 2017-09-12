@@ -91,27 +91,28 @@ var COMPONENTNAME = 'atto_sketch',
          * Converts base64 to binary.
          *
          * @method _convertImage
+         * @param {string} dataURI
          * @return {Blob} Binary object.
          * @private
          */
         _convertImage: function(dataURI) {
             // convert base64/URLEncoded data component to raw binary data held in a string
             var byteString;
-            if (dataURI.split(',')[0].indexOf('base64') >= 0)
+            if (dataURI.split(',')[0].indexOf('base64') >= 0) {
                 byteString = atob(dataURI.split(',')[1]);
-            else
+            } else {
                 byteString = unescape(dataURI.split(',')[1]);
-        
+            }
             // separate out the mime component
             var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
-        
+
             // write the bytes of the string to a typed array
             var ia = new Uint8Array(byteString.length);
             for (var i = 0; i < byteString.length; i++) {
                 ia[i] = byteString.charCodeAt(i);
             }
-        
-            return new Blob([ia], {type:mimeString});
+
+            return new Blob([ia], {type: mimeString});
         },
 
         /**
@@ -119,7 +120,7 @@ var COMPONENTNAME = 'atto_sketch',
          *
          * @method _doInsert
          * @param {EventFacade} e
-         * @return mixed
+         * @return {object}
          * @private
          */
         _doInsert: function(e) {
@@ -165,7 +166,7 @@ var COMPONENTNAME = 'atto_sketch',
                 // Insert spinner as a placeholder.
                 timestamp = new Date().getTime();
                 uploadid = 'moodleimage_' + Math.round(Math.random() * 100000) + '-' + timestamp;
-                self.getDialogue({ focusAfterHide: null }).hide();
+                self.getDialogue({focusAfterHide: null}).hide();
                 host.focus();
                 host.restoreSelection();
                 imagehtml = template({
@@ -225,11 +226,13 @@ var COMPONENTNAME = 'atto_sketch',
                             }
                         }
                     }
+                    return true;
                 };
                 xhr.open("POST", M.cfg.wwwroot + '/repository/repository_ajax.php?action=upload', true);
                 xhr.send(formData);
                 return true;
             }
+            return true;
         },
 
         /**
@@ -292,7 +295,7 @@ var COMPONENTNAME = 'atto_sketch',
          *
          * @method _displayDialogue
          * @param {EventFacade} e
-         * @param clickedicon
+         * @param {object} clickedicon
          * @private
          */
         _displayDialogue: function(e, clickedicon) {
@@ -314,7 +317,7 @@ var COMPONENTNAME = 'atto_sketch',
             dialogue.after('visibleChange', function() {
                 var attributes = dialogue.getAttrs();
 
-                if(attributes.visible === false) {
+                if (attributes.visible === false) {
                     setTimeout(function() {
                         dialogue.reset();
                     }, 5);
@@ -403,7 +406,7 @@ var COMPONENTNAME = 'atto_sketch',
          * events.
          *
          * @method _getFormContent
-         * @param clickedicon
+         * @param {object} clickedicon
          * @return {Node} The content to place in the dialogue.
          * @private
          */
@@ -444,7 +447,7 @@ var COMPONENTNAME = 'atto_sketch',
 
             // Hide the pop-up after we've received the selection in the "deliveryList" message.
             // Hiding before message is received causes exceptions in IE.
-            parent.getDialogue({ focusAfterHide: null }).hide();
+            parent.getDialogue({focusAfterHide: null}).hide();
 
             parent.editor.focus();
             parent.get('host').insertContentAtFocusPoint(sketch);
