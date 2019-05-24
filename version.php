@@ -24,8 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2018051000;        // The current plugin version (Date: YYYYMMDDXX).
-$plugin->release   = '1.1';
+$plugin->version   = 2019052400;        // The current plugin version (Date: YYYYMMDDXX).
+$plugin->release   = '1.2';
 $plugin->requires  = 2015111600;        // Requires this Moodle version.
 $plugin->component = 'atto_sketch';
 $plugin->maturity = MATURITY_STABLE;

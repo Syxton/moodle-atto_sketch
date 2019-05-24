@@ -70,6 +70,11 @@ var COMPONENTNAME = 'atto_sketch',
          * @method Initializer
          */
         initializer: function() {
+            // Filepicker must be enabled to work.
+            if (!this.get('host').canShowFilepicker('media') && this.get(ATTRSTOREINREPO) > 0) {
+                return;
+            }
+
             // Set name of button icon to be loaded.
             var icon = 'iconone';
 
@@ -99,7 +104,7 @@ var COMPONENTNAME = 'atto_sketch',
             if (dataURI.split(',')[0].indexOf('base64') >= 0) {
                 byteString = atob(dataURI.split(',')[1]);
             } else {
-                byteString = unescape(dataURI.split(',')[1]);
+                byteString = decodeURI(dataURI.split(',')[1]);
             }
             // separate out the mime component
             var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
