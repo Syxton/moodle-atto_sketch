@@ -41,7 +41,7 @@ var COMPONENTNAME = 'atto_sketch',
     SUBMITID = 'submit',
     CSS = {
         INPUTSUBMIT: 'atto_sketch_submit',
-        HGT: 'height: calc(100% - 40px);',
+        HGT: 'height: calc(100vh - 110px);',
         WDT: 'width: 100%;'
     },
     TEMPLATE = '' +
@@ -134,7 +134,18 @@ var COMPONENTNAME = 'atto_sketch',
             host.saveSelection();
             e = e._event;
 
-            var sketchimage = self._convertImage(myLC.getImage().toDataURL());
+            // Clear selection bars from being part of the image by clicking the select tool.
+            // document.getElementById('sketchpad').contentDocument.getElementById('selection').click();
+
+            //find iframe
+            var iframeBody = $('#sketchpad');
+
+            //find button inside iframe
+            var button = iframeBody.contents().find('#selection');
+
+            $(button).click(function() { alert("here"); });
+
+            var sketchimage = this._convertImage(iframeBody[0].contentDocument.getElementById('canvas_minipaint').toDataURL());
 
             // Only handle the event if an image file was dropped in.
             var handlesDataTransfer = (sketchimage && sketchimage.size && sketchimage.type == 'image/png');
@@ -266,14 +277,15 @@ var COMPONENTNAME = 'atto_sketch',
 
             if (images && images.size()) {
                 this._selectedImage = images.item(0);
+                width = this._selectedImage.get("width");
 
-                width = this._selectedImage.getAttribute('width');
-                if (!width.match(REGEX.ISPERCENT)) {
-                    width = parseInt(width, 10);
+                if (!width.toString().match(REGEX.ISPERCENT)) {
+                    width = parseInt(width.toString(), 10);
                 }
-                height = this._selectedImage.getAttribute('height');
-                if (!height.match(REGEX.ISPERCENT)) {
-                    height = parseInt(height, 10);
+
+                height = this._selectedImage.get('height');
+                if (!height.toString().match(REGEX.ISPERCENT)) {
+                    height = parseInt(height.toString(), 10);
                 }
 
                 if (width !== 0) {
@@ -283,8 +295,8 @@ var COMPONENTNAME = 'atto_sketch',
                     properties.height = height;
                 }
 
-                properties.src = this._selectedImage.getAttribute('src');
-                properties.alt = this._selectedImage.getAttribute('alt') || '';
+                properties.src = this._selectedImage.get("currentSrc");
+                properties.alt = this._selectedImage.get('alt') || '';
                 return properties;
             }
 
@@ -294,7 +306,7 @@ var COMPONENTNAME = 'atto_sketch',
         },
 
         /**
-         * Display the panoptobutton Dialogue
+         * Display the sketch Dialogue
          *
          * @method _displayDialogue
          * @param {EventFacade} e
@@ -352,24 +364,24 @@ var COMPONENTNAME = 'atto_sketch',
                 selected = this._getSelectedImageProperties();
             }
             document.getElementById(IFID).addEventListener("load", function() {
-                var sketchpad = document.getElementById(IFID).contentDocument.getElementsByClassName('literally')[0];
+                var sketchpad = document.getElementById('sketchpad').contentDocument.getElementById('canvas_minipaint')[0];
                 var iframe = document.getElementById(IFID).contentWindow;
-                myLC = iframe.LC.init(sketchpad,
-                       {
-                            imageURLPrefix: 'assets/img',
-                            tools: iframe.LC.defaultTools.concat([iframe.regularShapes])
-                       });
-
                 if (selected) { // Selection is an image.
-                    var newImage = new Image();
-                    newImage.src = selected.src;
-                    var newShape = iframe.LC.createShape('Image',
-                                   {
-                                        x: 10,
-                                        y: 10,
-                                        image: newImage
-                                   });
-                    myLC.saveShape(newShape);
+                    var image = new Image();
+                    image.src = selected.src;
+
+                  	var Layers = document.getElementById('sketchpad').contentWindow.Layers;
+                  	var name = image.src.replace(/^.*[\\\/]/, '');
+                  	var new_layer = {
+                  		name: name,
+                  		type: 'image',
+                  		data: image,
+                  		width: image.naturalWidth || selected.width,
+                  		height: image.naturalHeight || selected.height,
+                  		width_original: image.naturalWidth || selected.width,
+                  		height_original: image.naturalHeight || selected.height,
+                  	};
+                  	Layers.insert(new_layer);
                 }
 
                 // IE 11 and under do not understand CSS3 height calc().
@@ -445,7 +457,7 @@ var COMPONENTNAME = 'atto_sketch',
         _doInsertBase64: function(e) {
             e.preventDefault();
             var parent = this,
-                imgstring = myLC.getImage().toDataURL(),
+                imgstring = document.getElementById('sketchpad').contentDocument.getElementById('canvas_minipaint').toDataURL(),
                 sketch = '<img src="' + imgstring + '" />';
 
             // Hide the pop-up after we've received the selection in the "deliveryList" message.
