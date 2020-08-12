@@ -2,25 +2,3 @@
     height: 100%;
     margin: 0;
 }
-
-.literally .toolbar-at-top {
-    background-image: url(./img/tpback.png);
-}
-
-.literally {
-    height: 100%;
-    width: 100%;
-    position: relative;
-}
-
-#ls-tool-sides {
-    margin-left: 30px;
-    font-size: 1.3em;
-}
-
-#ls-sides {
-    width: 50px;
-    margin: 2px;
-    padding: 0 5px;
-    font-size: 20px;
-}
