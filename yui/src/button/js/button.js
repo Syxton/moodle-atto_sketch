@@ -1,3 +1,5 @@
+YUI.add('moodle-atto_sketch-button', function (Y, NAME) {
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -60,8 +62,7 @@ var COMPONENTNAME = 'atto_sketch',
                     '{{#if customstyle}}style="{{customstyle}}" {{/if}}' +
                     '{{#if classlist}}class="{{classlist}}" {{/if}}' +
                     '{{#if id}}id="{{id}}" {{/if}}' +
-                '/>',
-    myLC = null;
+                '/>';
 
     Y.namespace('M.atto_sketch').Button = Y.Base.create('button', Y.M.editor_atto.EditorPlugin, [], {
         /**
@@ -138,14 +139,13 @@ var COMPONENTNAME = 'atto_sketch',
             // document.getElementById('sketchpad').contentDocument.getElementById('selection').click();
 
             //find iframe
-            var iframeBody = $('#sketchpad');
+            var iframeBody = $('#' + IFID);
+            var sketchcontent = iframeBody.contents();
 
             //find button inside iframe
-            var button = iframeBody.contents().find('#selection');
+            var button = sketchcontent.find('#selection');
 
-            $(button).click(function() { alert("here"); });
-
-            var sketchimage = this._convertImage(iframeBody[0].contentDocument.getElementById('canvas_minipaint').toDataURL());
+            var sketchimage = this._convertImage(sketchcontent[0].getElementById('canvas_minipaint').toDataURL());
 
             // Only handle the event if an image file was dropped in.
             var handlesDataTransfer = (sketchimage && sketchimage.size && sketchimage.type == 'image/png');
@@ -364,13 +364,12 @@ var COMPONENTNAME = 'atto_sketch',
                 selected = this._getSelectedImageProperties();
             }
             document.getElementById(IFID).addEventListener("load", function() {
-                var sketchpad = document.getElementById('sketchpad').contentDocument.getElementById('canvas_minipaint')[0];
-                var iframe = document.getElementById(IFID).contentWindow;
                 if (selected) { // Selection is an image.
                     var image = new Image();
                     image.src = selected.src;
-
-                  	var Layers = document.getElementById('sketchpad').contentWindow.Layers;
+                    var iframeBody = $('#' + IFID);
+                    var sketchcontent = iframeBody.contents()[0].defaultView;
+                  	var Layers = sketchcontent.Layers;
                   	var name = image.src.replace(/^.*[\\\/]/, '');
                   	var new_layer = {
                   		name: name,
@@ -399,7 +398,7 @@ var COMPONENTNAME = 'atto_sketch',
                 // Set top and left to corner and calculate height with CSS3.
                 if (Y.one('.moodle-dialogue-focused')) {
                     Y.one('.moodle-dialogue-focused').setStyle('position', 'fixed');
-                    Y.one('.moodle-dialogue-focused').setStyle('z-index', '9999');
+                    Y.one('.moodle-dialogue-focused').setStyle('z-index', '999999');
                     Y.one('.moodle-dialogue-focused').setStyle('top', '0');
                     Y.one('.moodle-dialogue-focused').setStyle('left', '0');
                 }
@@ -414,6 +413,36 @@ var COMPONENTNAME = 'atto_sketch',
                     Y.one('.moodle-dialogue-focused').ancestor('.moodle-dialogue-fullscreen').setStyle('bottom', "0");
                 }
             });
+        },
+
+        _getSketchWindow: function (iframe_object) {
+          var doc;
+
+          if (iframe_object.contentWindow) {
+            return iframe_object.contentWindow;
+          }
+
+          if (iframe_object.window) {
+            return iframe_object.window;
+          }
+
+          if (!doc && iframe_object.contentDocument) {
+            doc = iframe_object.contentDocument;
+          }
+
+          if (!doc && iframe_object.document) {
+            doc = iframe_object.document;
+          }
+
+          if (doc && doc.defaultView) {
+           return doc.defaultView;
+          }
+
+          if (doc && doc.parentWindow) {
+            return doc.parentWindow;
+          }
+
+          return undefined;
         },
 
         /**
@@ -456,16 +485,18 @@ var COMPONENTNAME = 'atto_sketch',
          */
         _doInsertBase64: function(e) {
             e.preventDefault();
-            var parent = this,
-                imgstring = document.getElementById('sketchpad').contentDocument.getElementById('canvas_minipaint').toDataURL(),
-                sketch = '<img src="' + imgstring + '" />';
+            var parent = this;
+            var iframeBody = $('#' + IFID);
+            var sketchcontent = iframeBody.contents()[0];
+            var imgstring = sketchcontent.getElementById('canvas_minipaint').toDataURL();
+            var sketchhtml = '<img src="' + imgstring + '" />';
 
             // Hide the pop-up after we've received the selection in the "deliveryList" message.
             // Hiding before message is received causes exceptions in IE.
             parent.getDialogue({focusAfterHide: null}).hide();
 
             parent.editor.focus();
-            parent.get('host').insertContentAtFocusPoint(sketch);
+            parent.get('host').insertContentAtFocusPoint(sketchhtml);
             parent.markUpdated();
         }
     }, {
