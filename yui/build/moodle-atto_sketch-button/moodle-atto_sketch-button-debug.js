@@ -366,6 +366,7 @@ var COMPONENTNAME = 'atto_sketch',
             document.getElementById(IFID).addEventListener("load", function() {
                 if (selected) { // Selection is an image.
                     var image = new Image();
+                    image.crossOrigin = "anonymous";
                     image.src = selected.src;
                     var iframeBody = $('#' + IFID);
                     var sketchcontent = iframeBody.contents()[0].defaultView;
@@ -413,6 +414,36 @@ var COMPONENTNAME = 'atto_sketch',
                     Y.one('.moodle-dialogue-focused').ancestor('.moodle-dialogue-fullscreen').setStyle('bottom', "0");
                 }
             });
+        },
+
+        _getSketchWindow: function (iframe_object) {
+          var doc;
+
+          if (iframe_object.contentWindow) {
+            return iframe_object.contentWindow;
+          }
+
+          if (iframe_object.window) {
+            return iframe_object.window;
+          }
+
+          if (!doc && iframe_object.contentDocument) {
+            doc = iframe_object.contentDocument;
+          }
+
+          if (!doc && iframe_object.document) {
+            doc = iframe_object.document;
+          }
+
+          if (doc && doc.defaultView) {
+           return doc.defaultView;
+          }
+
+          if (doc && doc.parentWindow) {
+            return doc.parentWindow;
+          }
+
+          return undefined;
         },
 
         /**

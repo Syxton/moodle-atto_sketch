@@ -366,6 +366,7 @@ var COMPONENTNAME = 'atto_sketch',
             document.getElementById(IFID).addEventListener("load", function() {
                 if (selected) { // Selection is an image.
                     var image = new Image();
+                    image.crossOrigin = "anonymous";
                     image.src = selected.src;
                     var iframeBody = $('#' + IFID);
                     var sketchcontent = iframeBody.contents()[0].defaultView;
@@ -511,6 +512,6 @@ var COMPONENTNAME = 'atto_sketch',
         storeinrepo: {
             value: 0
         }
-    }});
-
-}, '@VERSION@', {"requires": ["moodle-editor_atto-plugin"]});
+    }
+  });
+}, '@VERSION@', {"requires": ["moodle-editor_atto-plugin"]}););

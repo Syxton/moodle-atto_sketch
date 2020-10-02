@@ -1,5 +1,3 @@
-YUI.add('moodle-atto_sketch-button', function (Y, NAME) {
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -366,6 +364,7 @@ var COMPONENTNAME = 'atto_sketch',
             document.getElementById(IFID).addEventListener("load", function() {
                 if (selected) { // Selection is an image.
                     var image = new Image();
+                    image.crossOrigin = "anonymous";
                     image.src = selected.src;
                     var iframeBody = $('#' + IFID);
                     var sketchcontent = iframeBody.contents()[0].defaultView;
