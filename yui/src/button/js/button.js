@@ -98,17 +98,17 @@ var COMPONENTNAME = 'atto_sketch',
          * @private
          */
         _convertImage: function(dataURI) {
-            // convert base64/URLEncoded data component to raw binary data held in a string
+            // Convert base64/URLEncoded data component to raw binary data held in a string.
             var byteString;
             if (dataURI.split(',')[0].indexOf('base64') >= 0) {
                 byteString = atob(dataURI.split(',')[1]);
             } else {
                 byteString = decodeURI(dataURI.split(',')[1]);
             }
-            // separate out the mime component
+            // Separate out the mime component.
             var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
 
-            // write the bytes of the string to a typed array
+            // Write the bytes of the string to a typed array.
             var ia = new Uint8Array(byteString.length);
             for (var i = 0; i < byteString.length; i++) {
                 ia[i] = byteString.charCodeAt(i);
@@ -136,11 +136,11 @@ var COMPONENTNAME = 'atto_sketch',
             // Clear selection bars from being part of the image by clicking the select tool.
             // document.getElementById('sketchpad').contentDocument.getElementById('selection').click();
 
-            //find iframe
+            // Find iframe.
             var iframeBody = $('#' + IFID);
             var sketchcontent = iframeBody.contents();
 
-            //find button inside iframe
+            // Find button inside iframe.
             var button = sketchcontent.find('#selection');
 
             var sketchimage = this._convertImage(sketchcontent[0].getElementById('canvas_minipaint').toDataURL());
@@ -201,10 +201,9 @@ var COMPONENTNAME = 'atto_sketch',
                         if (xhr.status === 200) {
                             result = JSON.parse(xhr.responseText);
                             if (result) {
-                                if (result.error) {
-                                    if (placeholder) {
-                                        placeholder.remove(true);
-                                    }
+                                if (result.error && placeholder) {
+                                    placeholder.remove(true);
+                                } else if (result.error) {
                                     return new M.core.ajaxException(result);
                                 }
 
@@ -368,18 +367,18 @@ var COMPONENTNAME = 'atto_sketch',
                     image.src = selected.src;
                     var iframeBody = $('#' + IFID);
                     var sketchcontent = iframeBody.contents()[0].defaultView;
-                  	var Layers = sketchcontent.Layers;
-                  	var name = image.src.replace(/^.*[\\\/]/, '');
-                  	var new_layer = {
-                  		name: name,
-                  		type: 'image',
-                  		data: image,
-                  		width: image.naturalWidth || selected.width,
-                  		height: image.naturalHeight || selected.height,
-                  		width_original: image.naturalWidth || selected.width,
-                  		height_original: image.naturalHeight || selected.height,
-                  	};
-                  	Layers.insert(new_layer);
+                    var Layers = sketchcontent.Layers;
+                    var name = image.src.replace(/^.*[\\\/]/, '');
+                    var new_layer = {
+                        name: name,
+                        type: 'image',
+                        data: image,
+                        width: image.naturalWidth || selected.width,
+                        height: image.naturalHeight || selected.height,
+                        width_original: image.naturalWidth || selected.width,
+                        height_original: image.naturalHeight || selected.height,
+                    };
+                    Layers.insert(new_layer);
                 }
 
                 // IE 11 and under do not understand CSS3 height calc().

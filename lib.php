@@ -38,8 +38,11 @@ function atto_sketch_strings_for_js() {
 }
 
 /**
- * Set params for this plugin
+ * Set params for this plugin.
  * @param string $elementid
+ * @param array $options
+ * @param string $foptions
+ * @return array
  */
 function atto_sketch_params_for_js($elementid, $options, $fpoptions) {
     // Pass the number of visible groups as a param.

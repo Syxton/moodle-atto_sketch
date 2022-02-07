@@ -124,7 +124,7 @@ body .sp-preview{
 .logo{
 	position: relative;
 	display: inline-block;
-	float: left;
+	float: right;
 	height: 30px;
 	width: 110px;
 	padding: 5px 5px 5px 36px;
