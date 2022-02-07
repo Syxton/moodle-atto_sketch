@@ -23,8 +23,6 @@
 
 namespace atto_sketch\privacy;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Privacy Subsystem for atto_sketch implementing null_provider.
  *

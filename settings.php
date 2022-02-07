@@ -35,6 +35,6 @@ if ($ADMIN->fulltree) {
     $setting = new admin_setting_configcheckbox('atto_sketch/storeinrepo',
                                                 $name,
                                                 $desc,
-                                                0);
+                                                1);
     $settings->add($setting);
 }
