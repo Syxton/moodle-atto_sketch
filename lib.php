@@ -39,12 +39,9 @@ function atto_sketch_strings_for_js() {
 
 /**
  * Set params for this plugin.
- * @param string $elementid
- * @param array $options
- * @param string $foptions
  * @return array
  */
-function atto_sketch_params_for_js($elementid, $options, $fpoptions) {
+function atto_sketch_params_for_js() {
     // Pass the number of visible groups as a param.
     $params = array('storeinrepo' => get_config('atto_sketch', 'storeinrepo'));
     return $params;

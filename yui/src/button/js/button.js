@@ -368,7 +368,7 @@ var COMPONENTNAME = 'atto_sketch',
                     var iframeBody = $('#' + IFID);
                     var sketchcontent = iframeBody.contents()[0].defaultView;
                     var Layers = sketchcontent.Layers;
-                    var name = image.src.replace(/^.*[\\\/]/, '');
+                    var name = image.src.replace(/^.*[\\/]/, '');
                     var new_layer = {
                         name: name,
                         type: 'image',
@@ -413,7 +413,7 @@ var COMPONENTNAME = 'atto_sketch',
             });
         },
 
-        _getSketchWindow: function (iframe_object) {
+        _getSketchWindow: function(iframe_object) {
           var doc;
 
           if (iframe_object.contentWindow) {

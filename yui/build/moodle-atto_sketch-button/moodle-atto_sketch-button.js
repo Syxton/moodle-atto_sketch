@@ -370,7 +370,7 @@ YUI.add('moodle-atto_sketch-button', function (Y, NAME) {
                  var iframeBody = $('#' + IFID);
                  var sketchcontent = iframeBody.contents()[0].defaultView;
                  var Layers = sketchcontent.Layers;
-                 var name = image.src.replace(/^.*[\\\/]/, '');
+                 var name = image.src.replace(/^.*[\\/]/, '');
                  var new_layer = {
                      name: name,
                      type: 'image',
@@ -415,7 +415,7 @@ YUI.add('moodle-atto_sketch-button', function (Y, NAME) {
          });
      },
 
-     _getSketchWindow: function (iframe_object) {
+     _getSketchWindow: function(iframe_object) {
        var doc;
 
        if (iframe_object.contentWindow) {
