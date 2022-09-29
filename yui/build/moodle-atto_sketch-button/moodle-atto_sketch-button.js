@@ -33,484 +33,485 @@ YUI.add('moodle-atto_sketch-button', function (Y, NAME) {
  * @extends M.editor_atto.EditorPlugin
  */
 
- var COMPONENTNAME = 'atto_sketch',
- ATTRSTOREINREPO = 'storeinrepo',
- REGEX = {
-     ISPERCENT: /\d+%/
- },
- IFSOURCE = M.cfg.wwwroot + '/lib/editor/atto/plugins/sketch/sketch.html',
- IFID = 'sketchpad',
- SUBMITID = 'submit',
- CSS = {
-     INPUTSUBMIT: 'atto_sketch_submit',
-     HGT: 'height: calc(100vh - 110px);',
-     WDT: 'width: 100%;'
- },
- TEMPLATE = '' +
-         '<iframe src="{{isource}}" id="{{iframeID}}" style="{{CSS.HGT}}{{CSS.WDT}}" scrolling="auto" frameborder="0">' +
-         '</iframe>' +
-         '<div style="text-align:center">' +
-             '<button class="mdl-align {{CSS.INPUTSUBMIT}}" id="{{submitid}}" style="{{selectalign}}">' +
-                 '{{get_string "insert" component}}' +
-             '</button>' +
-         '</div>',
- IMAGETEMPLATE = '' +
-             '<img src="{{url}}" alt="{{alt}}" ' +
-                 '{{#if width}}width="{{width}}" {{/if}}' +
-                 '{{#if height}}height="{{height}}" {{/if}}' +
-                 '{{#if presentation}}role="presentation" {{/if}}' +
-                 '{{#if customstyle}}style="{{customstyle}}" {{/if}}' +
-                 '{{#if classlist}}class="{{classlist}}" {{/if}}' +
-                 '{{#if id}}id="{{id}}" {{/if}}' +
-             '/>';
+var COMPONENTNAME = 'atto_sketch',
+    ATTRSTOREINREPO = 'storeinrepo',
+    REGEX = {
+        ISPERCENT: /\d+%/
+    },
+    IFSOURCE = M.cfg.wwwroot + '/lib/editor/atto/plugins/sketch/sketch.html',
+    IFID = 'sketchpad',
+    SUBMITID = 'submit',
+    CSS = {
+        INPUTSUBMIT: 'atto_sketch_submit',
+        HGT: 'height: calc(100vh - 110px);',
+        WDT: 'width: 100%;'
+    },
+    TEMPLATE = '' +
+            '<iframe src="{{isource}}" id="{{iframeID}}" style="{{CSS.HGT}}{{CSS.WDT}}" scrolling="auto" frameborder="0">' +
+            '</iframe>' +
+            '<div style="text-align:center">' +
+                '<button class="mdl-align {{CSS.INPUTSUBMIT}}" id="{{submitid}}" style="{{selectalign}}">' +
+                    '{{get_string "insert" component}}' +
+                '</button>' +
+            '</div>',
+    IMAGETEMPLATE = '' +
+                '<img src="{{url}}" alt="{{alt}}" ' +
+                    '{{#if width}}width="{{width}}" {{/if}}' +
+                    '{{#if height}}height="{{height}}" {{/if}}' +
+                    '{{#if presentation}}role="presentation" {{/if}}' +
+                    '{{#if customstyle}}style="{{customstyle}}" {{/if}}' +
+                    '{{#if classlist}}class="{{classlist}}" {{/if}}' +
+                    '{{#if id}}id="{{id}}" {{/if}}' +
+                '/>';
 
- Y.namespace('M.atto_sketch').Button = Y.Base.create('button', Y.M.editor_atto.EditorPlugin, [], {
-     /**
-      * Initialize the button
-      *
-      * @method Initializer
-      */
-     initializer: function() {
-         // Filepicker must be enabled to work.
-         if (!this.get('host').canShowFilepicker('media') && this.get(ATTRSTOREINREPO) > 0) {
-             return;
-         }
+    Y.namespace('M.atto_sketch').Button = Y.Base.create('button', Y.M.editor_atto.EditorPlugin, [], {
+        /**
+         * Initialize the button
+         *
+         * @method Initializer
+         */
+        initializer: function() {
+            // Filepicker must be enabled to work.
+            if (!this.get('host').canShowFilepicker('media') && this.get(ATTRSTOREINREPO) > 0) {
+                return;
+            }
 
-         // Set name of button icon to be loaded.
-         var icon = 'iconone';
+            // Set name of button icon to be loaded.
+            var icon = 'iconone';
 
-         // Add the panoptobutton icon/buttons.
-         this.addButton({
-             icon: 'ed/' + icon,
-             iconComponent: 'atto_sketch',
-             buttonName: icon,
-             callback: this._displayDialogue,
-             callbackArgs: icon,
-             tags: 'img',
-             tagMatchRequiresAll: false
-         });
-     },
+            // Add the panoptobutton icon/buttons.
+            this.addButton({
+                icon: 'ed/' + icon,
+                iconComponent: 'atto_sketch',
+                buttonName: icon,
+                callback: this._displayDialogue,
+                callbackArgs: icon,
+                tags: 'img',
+                tagMatchRequiresAll: false
+            });
+        },
 
-     /**
-      * Converts base64 to binary.
-      *
-      * @method _convertImage
-      * @param {string} dataURI
-      * @return {Blob} Binary object.
-      * @private
-      */
-     _convertImage: function(dataURI) {
-         // Convert base64/URLEncoded data component to raw binary data held in a string.
-         var byteString;
-         if (dataURI.split(',')[0].indexOf('base64') >= 0) {
-             byteString = atob(dataURI.split(',')[1]);
-         } else {
-             byteString = decodeURI(dataURI.split(',')[1]);
-         }
-         // Separate out the mime component.
-         var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+        /**
+         * Converts base64 to binary.
+         *
+         * @method _convertImage
+         * @param {string} dataURI
+         * @return {Blob} Binary object.
+         * @private
+         */
+        _convertImage: function(dataURI) {
+            // Convert base64/URLEncoded data component to raw binary data held in a string.
+            var byteString;
+            if (dataURI.split(',')[0].indexOf('base64') >= 0) {
+                byteString = atob(dataURI.split(',')[1]);
+            } else {
+                byteString = decodeURI(dataURI.split(',')[1]);
+            }
+            // Separate out the mime component.
+            var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
 
-         // Write the bytes of the string to a typed array.
-         var ia = new Uint8Array(byteString.length);
-         for (var i = 0; i < byteString.length; i++) {
-             ia[i] = byteString.charCodeAt(i);
-         }
+            // Write the bytes of the string to a typed array.
+            var ia = new Uint8Array(byteString.length);
+            for (var i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
 
-         return new Blob([ia], {type: mimeString});
-     },
+            return new Blob([ia], {type: mimeString});
+        },
 
-     /**
-      * Handle an image to repo.
-      *
-      * @method _doInsert
-      * @param {EventFacade} e
-      * @return {object}
-      * @private
-      */
-     _doInsert: function(e) {
-         var self = this,
-             host = this.get('host'),
-             template = Y.Handlebars.compile(IMAGETEMPLATE);
+        /**
+         * Handle an image to repo.
+         *
+         * @method _doInsert
+         * @param {EventFacade} e
+         * @return {object}
+         * @private
+         */
+        _doInsert: function(e) {
+            var self = this,
+                host = this.get('host'),
+                template = Y.Handlebars.compile(IMAGETEMPLATE);
 
-         host.saveSelection();
-         e = e._event;
+            host.saveSelection();
+            e = e._event;
 
-         // Clear selection bars from being part of the image by clicking the select tool.
-         // document.getElementById('sketchpad').contentDocument.getElementById('selection').click();
+            // Clear selection bars from being part of the image by clicking the select tool.
+            // document.getElementById('sketchpad').contentDocument.getElementById('selection').click();
 
-         // Find iframe.
-         var iframeBody = $('#' + IFID);
-         var sketchcontent = iframeBody.contents();
+            // Find iframe.
+            var iframeBody = $('#' + IFID);
+            var sketchcontent = iframeBody.contents();
 
-         // Find button inside iframe.
-         var button = sketchcontent.find('#selection');
+            // Find button inside iframe.
+            var button = sketchcontent.find('#selection');
 
-         var sketchimage = this._convertImage(sketchcontent[0].getElementById('canvas_minipaint').toDataURL());
+            var sketchimage = this._convertImage(sketchcontent[0].getElementById('canvas_minipaint').toDataURL());
 
-         // Only handle the event if an image file was dropped in.
-         var handlesDataTransfer = (sketchimage && sketchimage.size && sketchimage.type == 'image/png');
-         if (handlesDataTransfer) {
-             var options = host.get('filepickeroptions').image,
-                 savepath = (options.savepath === undefined) ? '/' : options.savepath,
-                 formData = new FormData(),
-                 timestamp = 0,
-                 uploadid = "",
-                 xhr = new XMLHttpRequest(),
-                 imagehtml = "",
-                 keys = Object.keys(options.repositories);
+            // Only handle the event if an image file was dropped in.
+            var handlesDataTransfer = (sketchimage && sketchimage.size && sketchimage.type == 'image/png');
+            if (handlesDataTransfer) {
+                var options = host.get('filepickeroptions').image,
+                    savepath = (options.savepath === undefined) ? '/' : options.savepath,
+                    formData = new FormData(),
+                    timestamp = 0,
+                    uploadid = "",
+                    xhr = new XMLHttpRequest(),
+                    imagehtml = "",
+                    keys = Object.keys(options.repositories);
 
-             e.preventDefault();
-             e.stopPropagation();
-             formData.append('repo_upload_file', sketchimage);
-             formData.append('itemid', options.itemid);
+                e.preventDefault();
+                e.stopPropagation();
+                formData.append('repo_upload_file', sketchimage);
+                formData.append('itemid', options.itemid);
 
-             // List of repositories is an object rather than an array.  This makes iteration more awkward.
-             for (var i = 0; i < keys.length; i++) {
-                 if (options.repositories[keys[i]].type === 'upload') {
-                     formData.append('repo_id', options.repositories[keys[i]].id);
-                     break;
-                 }
-             }
-             formData.append('env', options.env);
-             formData.append('sesskey', M.cfg.sesskey);
-             formData.append('client_id', options.client_id);
-             formData.append('savepath', savepath);
-             formData.append('ctx_id', options.context.id);
+                // List of repositories is an object rather than an array.  This makes iteration more awkward.
+                for (var i = 0; i < keys.length; i++) {
+                    if (options.repositories[keys[i]].type === 'upload') {
+                        formData.append('repo_id', options.repositories[keys[i]].id);
+                        break;
+                    }
+                }
+                formData.append('env', options.env);
+                formData.append('sesskey', M.cfg.sesskey);
+                formData.append('client_id', options.client_id);
+                formData.append('savepath', savepath);
+                formData.append('ctx_id', options.context.id);
 
-             // Insert spinner as a placeholder.
-             timestamp = new Date().getTime();
-             uploadid = 'moodleimage_' + Math.round(Math.random() * 100000) + '-' + timestamp;
-             self.getDialogue({focusAfterHide: null}).hide();
-             host.focus();
-             host.restoreSelection();
-             imagehtml = template({
-                 url: M.util.image_url("i/loading_small", 'moodle'),
-                 alt: M.util.get_string('uploading', COMPONENTNAME),
-                 id: uploadid
-             });
-             host.insertContentAtFocusPoint(imagehtml);
-             self.markUpdated();
+                // Insert spinner as a placeholder.
+                timestamp = new Date().getTime();
+                uploadid = 'moodleimage_' + Math.round(Math.random() * 100000) + '-' + timestamp;
+                self.getDialogue({focusAfterHide: null}).hide();
+                host.focus();
+                host.restoreSelection();
+                imagehtml = template({
+                    url: M.util.image_url("i/loading_small", 'moodle'),
+                    alt: M.util.get_string('uploading', COMPONENTNAME),
+                    id: uploadid
+                });
+                host.insertContentAtFocusPoint(imagehtml);
+                self.markUpdated();
 
-             // Kick off a XMLHttpRequest.
-             xhr.onreadystatechange = function() {
-                 var placeholder = self.editor.one('#' + uploadid),
-                     result,
-                     file,
-                     newhtml,
-                     newimage;
+                // Kick off a XMLHttpRequest.
+                xhr.onreadystatechange = function() {
+                    var placeholder = self.editor.one('#' + uploadid),
+                        result,
+                        file,
+                        newhtml,
+                        newimage;
 
-                 if (xhr.readyState === 4) {
-                     if (xhr.status === 200) {
-                         result = JSON.parse(xhr.responseText);
-                         if (result) {
-                             if (result.error && placeholder) {
-                                 placeholder.remove(true);
-                             } else if (result.error) {
-                                 return new M.core.ajaxException(result);
-                             }
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            result = JSON.parse(xhr.responseText);
+                            if (result) {
+                                if (result.error && placeholder) {
+                                    placeholder.remove(true);
+                                } else if (result.error) {
+                                    return new M.core.ajaxException(result);
+                                }
 
-                             file = result;
-                             if (result.event && result.event === 'fileexists') {
-                                 // A file with this name is already in use here - rename to avoid conflict.
-                                 // Chances are, it's a different image (stored in a different folder on the user's computer).
-                                 // If the user wants to reuse an existing image, they can copy/paste it within the editor.
-                                 file = result.newfile;
-                             }
+                                file = result;
+                                if (result.event && result.event === 'fileexists') {
+                                    // A file with this name is already in use here - rename to avoid conflict.
+                                    // Chances are, it's a different image (stored in a different folder on the user's computer).
+                                    // If the user wants to reuse an existing image, they can copy/paste it within the editor.
+                                    file = result.newfile;
+                                }
 
-                             // Replace placeholder with actual image.
-                             newhtml = template({
-                                 url: file.url,
-                                 presentation: true
-                             });
-                             newimage = Y.Node.create(newhtml);
-                             if (placeholder) {
-                                 placeholder.replace(newimage);
-                             } else {
-                                 self.editor.appendChild(newimage);
-                             }
-                             self.markUpdated();
-                         }
-                     } else {
-                         Y.use('moodle-core-notification-alert', function() {
-                             new M.core.alert({message: M.util.get_string('servererror', 'moodle')});
-                         });
-                         if (placeholder) {
-                             placeholder.remove(true);
-                         }
-                     }
-                 }
-                 return true;
-             };
-             xhr.open("POST", M.cfg.wwwroot + '/repository/repository_ajax.php?action=upload', true);
-             xhr.send(formData);
-             return true;
-         }
-         return true;
-     },
+                                // Replace placeholder with actual image.
+                                newhtml = template({
+                                    url: file.url,
+                                    presentation: true
+                                });
+                                newimage = Y.Node.create(newhtml);
+                                if (placeholder) {
+                                    placeholder.replace(newimage);
+                                } else {
+                                    self.editor.appendChild(newimage);
+                                }
+                                self.markUpdated();
+                            }
+                        } else {
+                            Y.use('moodle-core-notification-alert', function() {
+                                new M.core.alert({message: M.util.get_string('servererror', 'moodle')});
+                            });
+                            if (placeholder) {
+                                placeholder.remove(true);
+                            }
+                        }
+                    }
+                    return true;
+                };
+                xhr.open("POST", M.cfg.wwwroot + '/repository/repository_ajax.php?action=upload', true);
+                xhr.send(formData);
+                return true;
+            }
+            return true;
+        },
 
-     /**
-      * Gets the properties of the currently selected image.
-      *
-      * The first image only if multiple images are selected.
-      *
-      * @method _getSelectedImageProperties
-      * @return {object}
-      * @private
-      */
-     _getSelectedImageProperties: function() {
-         var properties = {
-             src: null,
-             alt: null,
-             width: null,
-             height: null
-         },
+        /**
+         * Gets the properties of the currently selected image.
+         *
+         * The first image only if multiple images are selected.
+         *
+         * @method _getSelectedImageProperties
+         * @return {object}
+         * @private
+         */
+        _getSelectedImageProperties: function() {
+            var properties = {
+                src: null,
+                alt: null,
+                width: null,
+                height: null
+            },
 
-         // Get the current selection.
-         images = this.get('host').getSelectedNodes(),
-         width,
-         height;
+            // Get the current selection.
+            images = this.get('host').getSelectedNodes(),
+            width,
+            height;
 
-         if (images) {
-             images = images.filter('img');
-         }
+            if (images) {
+                images = images.filter('img');
+            }
 
-         if (images && images.size()) {
-             this._selectedImage = images.item(0);
-             width = this._selectedImage.get("width");
+            if (images && images.size()) {
+                this._selectedImage = images.item(0);
+                width = this._selectedImage.get("width");
 
-             if (!width.toString().match(REGEX.ISPERCENT)) {
-                 width = parseInt(width.toString(), 10);
-             }
+                if (!width.toString().match(REGEX.ISPERCENT)) {
+                    width = parseInt(width.toString(), 10);
+                }
 
-             height = this._selectedImage.get('height');
-             if (!height.toString().match(REGEX.ISPERCENT)) {
-                 height = parseInt(height.toString(), 10);
-             }
+                height = this._selectedImage.get('height');
+                if (!height.toString().match(REGEX.ISPERCENT)) {
+                    height = parseInt(height.toString(), 10);
+                }
 
-             if (width !== 0) {
-                 properties.width = width;
-             }
-             if (height !== 0) {
-                 properties.height = height;
-             }
+                if (width !== 0) {
+                    properties.width = width;
+                }
+                if (height !== 0) {
+                    properties.height = height;
+                }
 
-             properties.src = this._selectedImage.get("currentSrc");
-             properties.alt = this._selectedImage.get('alt') || '';
-             return properties;
-         }
+                properties.src = this._selectedImage.get("currentSrc");
+                properties.alt = this._selectedImage.get('alt') || '';
+                return properties;
+            }
 
-         // No image selected - clean up.
-         this._selectedImage = null;
-         return false;
-     },
+            // No image selected - clean up.
+            this._selectedImage = null;
+            return false;
+        },
 
-     /**
-      * Display the sketch Dialogue
-      *
-      * @method _displayDialogue
-      * @param {EventFacade} e
-      * @param {object} clickedicon
-      * @private
-      */
-     _displayDialogue: function(e, clickedicon) {
-         var width = '100%',
-             height = '100vh',
-             bodycontent,
-             dialogue;
+        /**
+         * Display the sketch Dialogue
+         *
+         * @method _displayDialogue
+         * @param {EventFacade} e
+         * @param {object} clickedicon
+         * @private
+         */
+        _displayDialogue: function(e, clickedicon) {
+            var width = '100%',
+                height = '100vh',
+                bodycontent,
+                dialogue;
 
-         dialogue = this.getDialogue({
-             headerContent: M.util.get_string('sketchtitle', COMPONENTNAME),
-             width: width,
-             height: height,
-             focusAfterHide: clickedicon
-         });
+            dialogue = this.getDialogue({
+                headerContent: M.util.get_string('sketchtitle', COMPONENTNAME),
+                width: width,
+                height: height,
+                focusAfterHide: clickedicon
+            });
 
-         e.preventDefault();
+            e.preventDefault();
 
-         // When dialog becomes invisible, reset it. This fixes problems with multiple editors per page.
-         dialogue.after('visibleChange', function() {
-             var attributes = dialogue.getAttrs();
+            // When dialog becomes invisible, reset it. This fixes problems with multiple editors per page.
+            dialogue.after('visibleChange', function() {
+                var attributes = dialogue.getAttrs();
 
-             if (attributes.visible === false) {
-                 setTimeout(function() {
-                     dialogue.reset();
-                 }, 5);
-             }
-         });
+                if (attributes.visible === false) {
+                    setTimeout(function() {
+                        dialogue.reset();
+                    }, 5);
+                }
+            });
 
-         // Dialog doesn't detect changes in width without this.
-         // If you reuse the dialog, this seems necessary.
-         if (dialogue.width !== width + 'px') {
-             dialogue.set('width', width + 'px');
-         }
+            // Dialog doesn't detect changes in width without this.
+            // If you reuse the dialog, this seems necessary.
+            if (dialogue.width !== width + 'px') {
+                dialogue.set('width', width + 'px');
+            }
 
-         if (dialogue.height !== height + 'px') {
-             dialogue.set('height', height + 'px');
-         }
-         // Append buttons to iframe.
-         bodycontent = this._getFormContent(clickedicon);
+            if (dialogue.height !== height + 'px') {
+                dialogue.set('height', height + 'px');
+            }
+            // Append buttons to iframe.
+            bodycontent = this._getFormContent(clickedicon);
 
-         // Set to bodycontent.
-         dialogue.set('bodyContent', bodycontent);
+            // Set to bodycontent.
+            dialogue.set('bodyContent', bodycontent);
 
-         document.getElementById(IFID).src = IFSOURCE;
-         dialogue.centerDialogue();
-         dialogue.show();
-         this.markUpdated();
+            document.getElementById(IFID).src = IFSOURCE;
+            dialogue.centerDialogue();
+            dialogue.show();
+            this.markUpdated();
 
-         var selected = false;
-         if (this.get('host').getSelection() !== false) {
-             selected = this._getSelectedImageProperties();
-         }
-         document.getElementById(IFID).addEventListener("load", function() {
-             if (selected) { // Selection is an image.
-                 var image = new Image();
-                 image.crossOrigin = "anonymous";
-                 image.src = selected.src;
-                 var iframeBody = $('#' + IFID);
-                 var sketchcontent = iframeBody.contents()[0].defaultView;
-                 var Layers = sketchcontent.Layers;
-                 var name = image.src.replace(/^.*[\\/]/, '');
-                 var new_layer = {
-                     name: name,
-                     type: 'image',
-                     data: image,
-                     width: image.naturalWidth || selected.width,
-                     height: image.naturalHeight || selected.height,
-                     width_original: image.naturalWidth || selected.width,
-                     height_original: image.naturalHeight || selected.height,
-                 };
-                 Layers.insert(new_layer);
-             }
+            var selected = false;
+            if (this.get('host').getSelection() !== false) {
+                selected = this._getSelectedImageProperties();
+            }
+            document.getElementById(IFID).addEventListener("load", function() {
+                if (selected) { // Selection is an image.
+                    var image = new Image();
+                    image.crossOrigin = "anonymous";
+                    image.src = selected.src;
+                    var iframeBody = $('#' + IFID);
+                    var sketchcontent = iframeBody.contents()[0].defaultView;
+                    var Layers = sketchcontent.Layers;
+                    var name = image.src.replace(/^.*[\\/]/, '');
+                    var new_layer = {
+                        name: name,
+                        type: 'image',
+                        data: image,
+                        width: image.naturalWidth || selected.width,
+                        height: image.naturalHeight || selected.height,
+                        width_original: image.naturalWidth || selected.width,
+                        height_original: image.naturalHeight || selected.height,
+                    };
+                    Layers.insert(new_layer);
+                }
 
-             // IE 11 and under do not understand CSS3 height calc().
-             if (navigator.userAgent.indexOf('MSIE') !== -1
-                 || navigator.appVersion.indexOf('Trident/') > 0) {
-                 var ieheight = document.documentElement.clientHeight;
-                 if (Y.one('.moodle-dialogue-focused')) {
-                     Y.one('.moodle-dialogue-focused').setStyle('height', ieheight + 'px');
-                 }
-                 if (Y.one('.moodle-dialogue-focused .moodle-dialogue-bd')) {
-                     Y.one('.moodle-dialogue-focused .moodle-dialogue-bd').setStyle('height', ieheight - 50 + 'px');
-                 }
-             }
+                // IE 11 and under do not understand CSS3 height calc().
+                if (navigator.userAgent.indexOf('MSIE') !== -1
+                    || navigator.appVersion.indexOf('Trident/') > 0) {
+                    var ieheight = document.documentElement.clientHeight;
+                    if (Y.one('.moodle-dialogue-focused')) {
+                        Y.one('.moodle-dialogue-focused').setStyle('height', ieheight + 'px');
+                    }
+                    if (Y.one('.moodle-dialogue-focused .moodle-dialogue-bd')) {
+                        Y.one('.moodle-dialogue-focused .moodle-dialogue-bd').setStyle('height', ieheight - 50 + 'px');
+                    }
+                }
 
-             // Set top and left to corner and calculate height with CSS3.
-             if (Y.one('.moodle-dialogue-focused')) {
-                 Y.one('.moodle-dialogue-focused').setStyle('position', 'fixed');
-                 Y.one('.moodle-dialogue-focused').setStyle('z-index', '999999');
-                 Y.one('.moodle-dialogue-focused').setStyle('top', '0');
-                 Y.one('.moodle-dialogue-focused').setStyle('left', '0');
-             }
-             if (Y.one('.moodle-dialogue-focused .moodle-dialogue-bd')) {
-                 Y.one('.moodle-dialogue-focused .moodle-dialogue-bd').setStyle('height', 'calc(100% - 50px)');
-                 Y.one('.moodle-dialogue-focused .moodle-dialogue-bd').setStyle('padding', '0');
-             }
-             if (Y.one('.moodle-dialogue-focused').ancestor('.moodle-dialogue-base')) {
-                 Y.one('.moodle-dialogue-focused').ancestor('.moodle-dialogue-base').setStyle('bottom', "0");
-             }
-             if (Y.one('.moodle-dialogue-focused').ancestor('.moodle-dialogue-fullscreen')) {
-                 Y.one('.moodle-dialogue-focused').ancestor('.moodle-dialogue-fullscreen').setStyle('bottom', "0");
-             }
-         });
-     },
+                // Set top and left to corner and calculate height with CSS3.
+                if (Y.one('.moodle-dialogue-focused')) {
+                    Y.one('.moodle-dialogue-focused').setStyle('position', 'fixed');
+                    Y.one('.moodle-dialogue-focused').setStyle('z-index', '999999');
+                    Y.one('.moodle-dialogue-focused').setStyle('top', '0');
+                    Y.one('.moodle-dialogue-focused').setStyle('left', '0');
+                }
+                if (Y.one('.moodle-dialogue-focused .moodle-dialogue-bd')) {
+                    Y.one('.moodle-dialogue-focused .moodle-dialogue-bd').setStyle('height', 'calc(100% - 50px)');
+                    Y.one('.moodle-dialogue-focused .moodle-dialogue-bd').setStyle('padding', '0');
+                }
+                if (Y.one('.moodle-dialogue-focused').ancestor('.moodle-dialogue-base')) {
+                    Y.one('.moodle-dialogue-focused').ancestor('.moodle-dialogue-base').setStyle('bottom', "0");
+                }
+                if (Y.one('.moodle-dialogue-focused').ancestor('.moodle-dialogue-fullscreen')) {
+                    Y.one('.moodle-dialogue-focused').ancestor('.moodle-dialogue-fullscreen').setStyle('bottom', "0");
+                }
+            });
+        },
 
-     _getSketchWindow: function(iframe_object) {
-       var doc;
+        _getSketchWindow: function(iframe_object) {
+          var doc;
 
-       if (iframe_object.contentWindow) {
-         return iframe_object.contentWindow;
-       }
+          if (iframe_object.contentWindow) {
+            return iframe_object.contentWindow;
+          }
 
-       if (iframe_object.window) {
-         return iframe_object.window;
-       }
+          if (iframe_object.window) {
+            return iframe_object.window;
+          }
 
-       if (!doc && iframe_object.contentDocument) {
-         doc = iframe_object.contentDocument;
-       }
+          if (!doc && iframe_object.contentDocument) {
+            doc = iframe_object.contentDocument;
+          }
 
-       if (!doc && iframe_object.document) {
-         doc = iframe_object.document;
-       }
+          if (!doc && iframe_object.document) {
+            doc = iframe_object.document;
+          }
 
-       if (doc && doc.defaultView) {
-        return doc.defaultView;
-       }
+          if (doc && doc.defaultView) {
+           return doc.defaultView;
+          }
 
-       if (doc && doc.parentWindow) {
-         return doc.parentWindow;
-       }
+          if (doc && doc.parentWindow) {
+            return doc.parentWindow;
+          }
 
-       return undefined;
-     },
+          return undefined;
+        },
 
-     /**
-      * Return the dialogue content for the tool, attaching any required
-      * events.
-      *
-      * @method _getFormContent
-      * @param {object} clickedicon
-      * @return {Node} The content to place in the dialogue.
-      * @private
-      */
-     _getFormContent: function(clickedicon) {
-         var template = Y.Handlebars.compile(TEMPLATE),
-             content = Y.Node.create(template({
-                 elementid: this.get('host').get('elementid'),
-                 CSS: CSS,
-                 component: COMPONENTNAME,
-                 clickedicon: clickedicon,
-                 isource: IFSOURCE,
-                 iframeID: IFID,
-                 submitid: SUBMITID
-             }));
+        /**
+         * Return the dialogue content for the tool, attaching any required
+         * events.
+         *
+         * @method _getFormContent
+         * @param {object} clickedicon
+         * @return {Node} The content to place in the dialogue.
+         * @private
+         */
+        _getFormContent: function(clickedicon) {
+            var template = Y.Handlebars.compile(TEMPLATE),
+                content = Y.Node.create(template({
+                    elementid: this.get('host').get('elementid'),
+                    CSS: CSS,
+                    component: COMPONENTNAME,
+                    clickedicon: clickedicon,
+                    isource: IFSOURCE,
+                    iframeID: IFID,
+                    submitid: SUBMITID
+                }));
 
-             this._form = content;
-             // Check setting.
-             if (this.get(ATTRSTOREINREPO) > 0) {
-                 this._form.one('.' + CSS.INPUTSUBMIT).on('click', this._doInsert, this);
-             } else {
-                 this._form.one('.' + CSS.INPUTSUBMIT).on('click', this._doInsertBase64, this);
-             }
+                this._form = content;
+                // Check setting.
+                if (this.get(ATTRSTOREINREPO) > 0) {
+                    this._form.one('.' + CSS.INPUTSUBMIT).on('click', this._doInsert, this);
+                } else {
+                    this._form.one('.' + CSS.INPUTSUBMIT).on('click', this._doInsertBase64, this);
+                }
 
-             return content;
-     },
+                return content;
+        },
 
-     /**
-      * Inserts the users input onto the page
-      * @method _doInsertBase64
-      * @param {EventFacade} e
-      * @private
-      */
-     _doInsertBase64: function(e) {
-         e.preventDefault();
-         var parent = this;
-         var iframeBody = $('#' + IFID);
-         var sketchcontent = iframeBody.contents()[0];
-         var imgstring = sketchcontent.getElementById('canvas_minipaint').toDataURL();
-         var sketchhtml = '<img src="' + imgstring + '" />';
+        /**
+         * Inserts the users input onto the page
+         * @method _doInsertBase64
+         * @param {EventFacade} e
+         * @private
+         */
+        _doInsertBase64: function(e) {
+            e.preventDefault();
+            var parent = this;
+            var iframeBody = $('#' + IFID);
+            var sketchcontent = iframeBody.contents()[0];
+            var imgstring = sketchcontent.getElementById('canvas_minipaint').toDataURL();
+            var sketchhtml = '<img src="' + imgstring + '" />';
 
-         // Hide the pop-up after we've received the selection in the "deliveryList" message.
-         // Hiding before message is received causes exceptions in IE.
-         parent.getDialogue({focusAfterHide: null}).hide();
+            // Hide the pop-up after we've received the selection in the "deliveryList" message.
+            // Hiding before message is received causes exceptions in IE.
+            parent.getDialogue({focusAfterHide: null}).hide();
 
-         parent.editor.focus();
-         parent.get('host').insertContentAtFocusPoint(sketchhtml);
-         parent.markUpdated();
-     }
- }, {
- ATTRS: {
-     /**
-      * How to save sketches.
-      *
-      * @attribute storeinrepo
-      * @type Number
-      * @default 0
-      */
-     storeinrepo: {
-         value: 0
-     }
- }});
+            parent.editor.focus();
+            parent.get('host').insertContentAtFocusPoint(sketchhtml);
+            parent.markUpdated();
+        }
+    }, {
+    ATTRS: {
+        /**
+         * How to save sketches.
+         *
+         * @attribute storeinrepo
+         * @type Number
+         * @default 0
+         */
+        storeinrepo: {
+            value: 0
+        }
+    }});
 
-}, '@VERSION@', {"requires": ["moodle-editor_atto-plugin"]}););
+
+}, '@VERSION@', {"requires": ["moodle-editor_atto-plugin"]});
