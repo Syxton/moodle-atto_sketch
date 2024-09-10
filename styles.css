@@ -1,3 +1,8 @@
 .sketchpad {
     height: calc(100vh - 100px);
 }
+
+.moodle-dialogue-focused:has(#sketchpad) {
+    top: 0 !important;
+    left: 0 !important;
+}
